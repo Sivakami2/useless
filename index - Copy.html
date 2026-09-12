@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoloRoute — Global Trip Blueprint</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: "#111318",
+            paper: "#f5f5f0",
+            accent: "#ff5c35",
+            lime: "#c7f36b",
+            muted: "#6b6f76"
+          },
+          boxShadow: {
+            card: "0 8px 30px rgba(17,19,24,.07)"
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background: #f5f5f0;
+      color: #111318;
+    }
+
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(17,19,24,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17,19,24,.045) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .loader {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .fade {
+      animation: fade .35s ease;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen font-sans">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 border-b border-black/10 bg-paper/90 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
+
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-ink text-lime flex items-center justify-center font-black">
+          SR
+        </div>
+
+        <div>
+          <h1 class="font-black tracking-tight">SoloRoute</h1>
+          <p class="text-[10px] uppercase tracking-[.2em] text-muted">
+            Global Trip Blueprint
+          </p>
+        </div>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-2 text-xs uppercase tracking-widest text-muted">
+        <span class="w-2 h-2 rounded-full bg-lime"></span>
+        Wikipedia Live
+      </div>
+
+    </div>
+  </header>
+
+
+  <main class="grid-bg min-h-screen">
+
+    <!-- HERO -->
+    <section class="max-w-7xl mx-auto px-5 sm:px-8 pt-14 pb-10">
+
+      <div class="grid lg:grid-cols-[1fr_430px] gap-10 items-end">
+
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[.25em] text-accent mb-4">
+            Independent travel intelligence
+          </p>
+
+          <h2 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-[-.06em] leading-[.9]">
+            Build your route.
+            <br />
+            <span class="text-accent">Know the city.</span>
+          </h2>
+
+          <p class="mt-6 max-w-xl text-muted leading-relaxed">
+            Search any city and generate a solo-travel blueprint using
+            live information from Wikipedia.
+          </p>
+        </div>
+
+
+        <!-- SEARCH -->
+        <div class="bg-white rounded-3xl border border-black/10 p-5 shadow-card">
+
+          <label
+            for="citySearch"
+            class="block text-xs font-black uppercase tracking-widest mb-3"
+          >
+            Destination
+          </label>
+
+          <form id="searchForm" class="flex gap-2">
+
+            <input
+              id="citySearch"
+              type="search"
+              placeholder="Try Tokyo, Paris, Nairobi..."
+              autocomplete="off"
+              class="flex-1 min-w-0 bg-paper border border-black/10 rounded-2xl px-4 py-3.5 outline-none focus:border-ink focus:ring-2 focus:ring-black/10"
+            />
+
+            <button
+              id="searchButton"
+              type="submit"
+              class="bg-ink text-white rounded-2xl px-5 font-bold hover:bg-accent transition flex items-center justify-center min-w-[90px]"
+            >
+              Search
+            </button>
+
+          </form>
+
+          <div id="searchStatus" class="min-h-5 mt-3 text-xs text-muted"></div>
+
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- DASHBOARD -->
+    <section class="max-w-7xl mx-auto px-5 sm:px-8 pb-16">
+
+
+      <!-- OVERVIEW + TRANSIT -->
+      <div class="grid lg:grid-cols-[1.65fr_1fr] gap-5">
+
+
+        <!-- OVERVIEW CARD -->
+        <article class="bg-white border border-black/10 rounded-3xl overflow-hidden shadow-card">
+
+          <div class="p-6 sm:p-8 border-b border-black/10">
+
+            <div class="flex justify-between items-start gap-4">
+
+              <div>
+                <p class="text-xs uppercase tracking-[.2em] text-muted font-bold">
+                  01 / Overview
+                </p>
+
+                <h2
+                  id="cityTitle"
+                  class="text-4xl sm:text-5xl font-black tracking-tight mt-2"
+                >
+                  Tokyo
+                </h2>
+              </div>
+
+              <span
+                id="countryBadge"
+                class="bg-lime px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider"
+              >
+                Japan
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div class="grid sm:grid-cols-[1fr_240px]">
+
+            <div class="p-6 sm:p-8">
+
+              <div id="overviewContent" class="text-muted leading-relaxed">
+                Loading destination information...
+              </div>
+
+            </div>
+
+
+            <div class="relative min-h-[260px] bg-ink overflow-hidden">
+
+              <img
+                id="cityImage"
+                src=""
+                alt="Destination"
+                class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500"
+              />
+
+              <div
+                id="imagePlaceholder"
+                class="absolute inset-0 flex items-center justify-center text-lime/30 text-7xl font-black"
+              >
+                SR
+              </div>
+
+              <div class="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/80">
+                <p
+                  id="imageCaption"
+                  class="text-white text-xs uppercase tracking-widest font-bold"
+                ></p>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="grid grid-cols-3 border-t border-black/10">
+
+            <div class="p-5">
+              <div class="text-[10px] uppercase tracking-widest text-muted font-bold">
+                Coordinates
+              </div>
+              <div id="coordinates" class="font-bold text-sm mt-1">
+                —
+              </div>
+            </div>
+
+            <div class="p-5 border-l border-black/10">
+              <div class="text-[10px] uppercase tracking-widest text-muted font-bold">
+                Language
+              </div>
+              <div id="language" class="font-bold text-sm mt-1">
+                —
+              </div>
+            </div>
+
+            <div class="p-5 border-l border-black/10">
+              <div class="text-[10px] uppercase tracking-widest text-muted font-bold">
+                Source
+              </div>
+              <div class="font-bold text-sm mt-1">
+                Wikipedia
+              </div>
+            </div>
+
+          </div>
+
+        </article>
+
+
+        <!-- TRANSIT -->
+        <article class="bg-ink text-white rounded-3xl p-6 sm:p-8 shadow-card">
+
+          <div class="flex justify-between items-start">
+
+            <div>
+              <p class="text-xs uppercase tracking-[.2em] text-white/45 font-bold">
+                02 / Transit
+              </p>
+
+              <h2 class="text-3xl font-black tracking-tight mt-2">
+                Move smart.
+              </h2>
+            </div>
+
+            <div class="w-10 h-10 rounded-xl bg-lime text-ink flex items-center justify-center font-black">
+              ↗
+            </div>
+
+          </div>
+
+
+          <div class="mt-10 space-y-4">
+
+            <div class="rounded-2xl bg-white/10 p-5">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-xl">🚇</span>
+                <span class="font-black">Public Transit</span>
+              </div>
+
+              <p class="text-sm text-white/55">
+                Research metro, rail, tram and bus networks before departure.
+              </p>
+            </div>
+
+
+            <div class="rounded-2xl bg-white/10 p-5">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-xl">🚶</span>
+                <span class="font-black">Walkability</span>
+              </div>
+
+              <p class="text-sm text-white/55">
+                Combine central districts and nearby attractions on foot.
+              </p>
+            </div>
+
+
+            <div class="rounded-2xl bg-lime text-ink p-5">
+              <div class="text-xs uppercase tracking-widest font-black mb-2">
+                Solo rule
+              </div>
+
+              <p class="font-bold">
+                Keep your first and last transfer of the day simple.
+              </p>
+            </div>
+
+          </div>
+
+        </article>
+
+      </div>
+
+
+      <!-- TOP SIGHTS -->
+      <article class="mt-5 bg-white border border-black/10 rounded-3xl p-6 sm:p-8 shadow-card">
+
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-7">
+
+          <div>
+            <p class="text-xs uppercase tracking-[.2em] text-muted font-bold">
+              03 / Top sights
+            </p>
+
+            <h2 class="text-3xl sm:text-4xl font-black tracking-tight mt-2">
+              Build your first loop.
+            </h2>
+          </div>
+
+          <p id="sightsHint" class="text-sm text-muted">
+            Related Wikipedia destinations will appear here.
+          </p>
+
+        </div>
+
+
+        <div
+          id="sightsGrid"
+          class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+
+          <div class="rounded-2xl bg-paper p-5 min-h-36">
+            <div class="text-3xl font-black">01</div>
+            <div class="mt-8 text-sm font-bold text-muted">
+              Search for a city
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-paper p-5 min-h-36">
+            <div class="text-3xl font-black">02</div>
+            <div class="mt-8 text-sm font-bold text-muted">
+              Get the overview
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-paper p-5 min-h-36">
+            <div class="text-3xl font-black">03</div>
+            <div class="mt-8 text-sm font-bold text-muted">
+              Discover sights
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-paper p-5 min-h-36">
+            <div class="text-3xl font-black">04</div>
+            <div class="mt-8 text-sm font-bold text-muted">
+              Plan your route
+            </div>
+          </div>
+
+        </div>
+
+      </article>
+
+
+      <!-- SAFETY MATRIX -->
+      <article class="mt-5 bg-white border border-black/10 rounded-3xl overflow-hidden shadow-card">
+
+        <div class="p-6 sm:p-8 border-b border-black/10">
+
+          <div class="flex flex-col lg:flex-row justify-between gap-5">
+
+            <div>
+              <p class="text-xs uppercase tracking-[.2em] text-muted font-bold">
+                04 / Safety matrix
+              </p>
+
+              <h2 class="text-3xl sm:text-4xl font-black tracking-tight mt-2">
+                Solo readiness check.
+              </h2>
+            </div>
+
+            <p class="text-sm text-muted max-w-md">
+              Use this framework as a planning checklist. Always verify
+              current local guidance and official travel advisories.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="overflow-x-auto">
+
+          <table class="w-full min-w-[750px] text-left">
+
+            <thead class="bg-ink text-white">
+
+              <tr>
+                <th class="px-6 py-4 text-xs uppercase tracking-widest">
+                  Factor
+                </th>
+
+                <th class="px-6 py-4 text-xs uppercase tracking-widest">
+                  Baseline
+                </th>
+
+                <th class="px-6 py-4 text-xs uppercase tracking-widest">
+                  Solo tactic
+                </th>
+
+                <th class="px-6 py-4 text-xs uppercase tracking-widest">
+                  Check before departure
+                </th>
+              </tr>
+
+            </thead>
+
+
+            <tbody class="divide-y divide-black/10">
+
+              <tr>
+
+                <td class="px-6 py-5 font-black">
+                  Situational awareness
+                </td>
+
+                <td class="px-6 py-5">
+                  <span class="flex items-center gap-2 font-bold">
+                    <span class="w-2 h-2 rounded-full bg-lime"></span>
+                    High priority
+                  </span>
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Keep your phone accessible and stay aware of surroundings.
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Neighborhoods, local norms, common scams
+                </td>
+
+              </tr>
+
+
+              <tr>
+
+                <td class="px-6 py-5 font-black">
+                  Night movement
+                </td>
+
+                <td class="px-6 py-5">
+                  <span class="flex items-center gap-2 font-bold">
+                    <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    Variable
+                  </span>
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Prefer busy routes and pre-arranged transport.
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Late-night transport availability
+                </td>
+
+              </tr>
+
+
+              <tr>
+
+                <td class="px-6 py-5 font-black">
+                  Documents & valuables
+                </td>
+
+                <td class="px-6 py-5">
+                  <span class="flex items-center gap-2 font-bold">
+                    <span class="w-2 h-2 rounded-full bg-lime"></span>
+                    Essential
+                  </span>
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Carry copies and keep backups separate from originals.
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Passport, visa, insurance
+                </td>
+
+              </tr>
+
+
+              <tr>
+
+                <td class="px-6 py-5 font-black">
+                  Local alerts
+                </td>
+
+                <td class="px-6 py-5">
+                  <span class="flex items-center gap-2 font-bold">
+                    <span class="w-2 h-2 rounded-full bg-accent"></span>
+                    Live check
+                  </span>
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Re-check conditions before and during travel.
+                </td>
+
+                <td class="px-6 py-5 text-sm text-muted">
+                  Official government and city advisories
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <div class="p-6 sm:p-8 bg-lime flex flex-col sm:flex-row justify-between gap-4">
+
+          <div>
+            <div class="text-xs uppercase tracking-widest font-black">
+              Blueprint principle
+            </div>
+
+            <div class="text-lg font-black mt-1">
+              Good preparation creates more freedom.
+            </div>
+          </div>
+
+          <div class="text-sm font-bold max-w-sm">
+            Wikipedia provides context, not a live safety rating.
+            Verify critical information with official sources.
+          </div>
+
+        </div>
+
+      </article>
+
+    </section>
+
+  </main>
+
+
+  <!-- FOOTER -->
+  <footer class="bg-ink text-white">
+
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row justify-between gap-3 text-xs text-white/50">
+
+      <span>
+        SOLO ROUTE / GLOBAL TRIP BLUEPRINT
+      </span>
+
+      <span>
+        Powered by Wikipedia APIs
+      </span>
+
+    </div>
+
+  </footer>
+
+
+  <!-- JAVASCRIPT -->
+  <script>
+
+    /*
+      SoloRoute
+      ----------
+      Wikipedia REST API:
+      https://en.wikipedia.org/api/rest_v1/
+
+      Wikipedia MediaWiki API:
+      https://en.wikipedia.org/w/api.php
+
+      The application uses async / await for all API requests.
+    */
+
+
+    const WIKI_API =
+      "https://en.wikipedia.org/w/api.php";
+
+    const WIKI_REST =
+      "https://en.wikipedia.org/api/rest_v1/page/summary/";
+
+
+    const form =
+      document.getElementById("searchForm");
+
+    const input =
+      document.getElementById("citySearch");
+
+    const searchButton =
+      document.getElementById("searchButton");
+
+    const searchStatus =
+      document.getElementById("searchStatus");
+
+    const cityTitle =
+      document.getElementById("cityTitle");
+
+    const countryBadge =
+      document.getElementById("countryBadge");
+
+    const overviewContent =
+      document.getElementById("overviewContent");
+
+    const cityImage =
+      document.getElementById("cityImage");
+
+    const imagePlaceholder =
+      document.getElementById("imagePlaceholder");
+
+    const imageCaption =
+      document.getElementById("imageCaption");
+
+    const coordinates =
+      document.getElementById("coordinates");
+
+    const language =
+      document.getElementById("language");
+
+    const sightsGrid =
+      document.getElementById("sightsGrid");
+
+    const sightsHint =
+      document.getElementById("sightsHint");
+
+
+    let debounceTimer;
+
+
+    /*
+      Escape HTML before inserting API content
+      into the page.
+    */
+
+    function escapeHTML(value) {
+
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    }
+
+
+    /*
+      Generic JSON fetcher.
+    */
+
+    async function fetchJSON(url) {
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(
+          `Wikipedia request failed: ${response.status}`
+        );
+      }
+
+      return await response.json();
+
+    }
+
+
+    /*
+      Search Wikipedia using the MediaWiki API.
+    */
+
+    async function searchWikipedia(city) {
+
+      const params = new URLSearchParams({
+
+        action: "query",
+
+        generator: "search",
+
+        gsrsearch: city,
+
+        gsrnamespace: "0",
+
+        gsrlimit: "8",
+
+        prop: "pageimages|coordinates|extracts",
+
+        exintro: "1",
+
+        explaintext: "1",
+
+        exsentences: "3",
+
+        piprop: "thumbnail",
+
+        pithumbsize: "900",
+
+        pilimit: "8",
+
+        format: "json",
+
+        origin: "*"
+
+      });
+
+
+      const url =
+        `${WIKI_API}?${params.toString()}`;
+
+
+      const data =
+        await fetchJSON(url);
+
+
+      if (!data.query || !data.query.pages) {
+        return [];
+      }
+
+
+      return Object.values(data.query.pages);
+
+    }
+
+
+    /*
+      Get the detailed Wikipedia summary.
+    */
+
+    async function getWikipediaSummary(title) {
+
+      const encodedTitle =
+        encodeURIComponent(
+          title.replaceAll(" ", "_")
+        );
+
+
+      const url =
+        `${WIKI_REST}${encodedTitle}`;
+
+
+      return await fetchJSON(url);
+
+    }
+
+
+    /*
+      Update loading state.
+    */
+
+    function setLoading(loading) {
+
+      searchButton.disabled = loading;
+
+
+      if (loading) {
+
+        searchButton.innerHTML =
+          `<span class="loader"></span>`;
+
+      } else {
+
+        searchButton.textContent =
+          "Search";
+
+      }
+
+    }
+
+
+    /*
+      Render destination image.
+    */
+
+    function renderImage(imageSource) {
+
+      if (!imageSource) {
+
+        cityImage.classList.add("opacity-0");
+
+        imagePlaceholder.classList.remove("hidden");
+
+        imageCaption.textContent = "";
+
+        return;
+
+      }
+
+
+      cityImage.onload = () => {
+
+        cityImage.classList.remove("opacity-0");
+
+        imagePlaceholder.classList.add("hidden");
+
+      };
+
+
+      cityImage.src =
+        imageSource;
+
+
+      imageCaption.textContent =
+        "Wikipedia image";
+
+    }
+
+
+    /*
+      Render the overview card.
+    */
+
+    function renderOverview(summary) {
+
+      cityTitle.textContent =
+        summary.title || "Unknown destination";
+
+
+      if (summary.description) {
+
+        countryBadge.textContent =
+          summary.description;
+
+        countryBadge.classList.remove("hidden");
+
+      } else {
+
+        countryBadge.classList.add("hidden");
+
+      }
+
+
+      const description =
+        summary.extract ||
+        "No Wikipedia summary is available for this destination.";
+
+
+      const wikiURL =
+        summary.content_urls?.desktop?.page ||
+        "#";
+
+
+      overviewContent.innerHTML = `
+
+        <div class="fade">
+
+          <p class="text-lg sm:text-xl text-ink font-medium leading-relaxed">
+
+            ${escapeHTML(description)}
+
+          </p>
+
+
+          <a
+            href="${wikiURL}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex mt-7 text-xs font-black uppercase tracking-widest text-accent hover:text-ink transition"
+          >
+            Read on Wikipedia ↗
+          </a>
+
+        </div>
+
+      `;
+
+
+      const location =
+        summary.coordinates?.[0];
+
+
+      if (
+        location &&
+        Number.isFinite(location.lat) &&
+        Number.isFinite(location.lon)
+      ) {
+
+        coordinates.textContent =
+          `${location.lat.toFixed(3)}, ${location.lon.toFixed(3)}`;
+
+      } else {
+
+        coordinates.textContent =
+          "—";
+
+      }
+
+
+      language.textContent =
+        summary.lang
+          ? summary.lang.toUpperCase()
+          : "EN";
+
+
+      renderImage(
+        summary.thumbnail?.source
+      );
+
+    }
+
+
+    /*
+      Render related destinations / sights.
+    */
+
+    function renderSights(results, mainTitle) {
+
+      const filtered =
+        results
+          .filter(item => {
+
+            const title =
+              item.title || "";
+
+            return title.toLowerCase() !==
+              mainTitle.toLowerCase();
+
+          })
+          .slice(0, 4);
+
+
+      if (!filtered.length) {
+
+        sightsGrid.innerHTML = `
+
+          <div class="sm:col-span-2 lg:col-span-4 bg-paper rounded-2xl p-6 text-muted">
+
+            No related Wikipedia results were found.
+            Try a more specific destination name.
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      sightsGrid.innerHTML =
+        filtered.map((item, index) => {
+
+          const title =
+            item.title || "Wikipedia entry";
+
+
+          const image =
+            item.thumbnail?.source;
+
+
+          const extract =
+            item.extract ||
+            "Explore this Wikipedia entry.";
+
+
+          const wikiURL =
+            `https://en.wikipedia.org/wiki/${
+              encodeURIComponent(
+                title.replaceAll(" ", "_")
+              )
+            }`;
+
+
+          return `
+
+            <a
+              href="${wikiURL}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group rounded-2xl overflow-hidden bg-paper border border-black/5 hover:border-black/20 hover:-translate-y-1 transition fade"
+            >
+
+              <div class="h-36 bg-ink relative overflow-hidden">
+
+                ${
+                  image
+                    ? `
+                      <img
+                        src="${image}"
+                        alt="${escapeHTML(title)}"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      />
+                    `
+                    : `
+                      <div class="w-full h-full flex items-center justify-center text-lime text-4xl font-black">
+                        ${String(index + 1).padStart(2, "0")}
+                      </div>
+                    `
+                }
+
+
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+
+
+                <span class="absolute top-3 left-3 text-[10px] uppercase tracking-widest font-black text-white/80">
+                  0${index + 1}
+                </span>
+
+              </div>
+
+
+              <div class="p-5">
+
+                <h3 class="font-black text-lg leading-tight group-hover:text-accent transition">
+                  ${escapeHTML(title)}
+                </h3>
+
+
+                <p class="text-xs text-muted leading-relaxed mt-2 line-clamp-3">
+                  ${escapeHTML(extract)}
+                </p>
+
+              </div>
+
+            </a>
+
+          `;
+
+        }).join("");
+
+
+      sightsHint.textContent =
+        `${filtered.length} related Wikipedia entries found.`;
+
+    }
+
+
+    /*
+      Main city search function.
+    */
+
+    async function loadCity(city) {
+
+      city =
+        city.trim();
+
+
+      if (!city) {
+
+        searchStatus.textContent =
+          "Enter a city name.";
+
+        input.focus();
+
+        return;
+
+      }
+
+
+      setLoading(true);
+
+
+      searchStatus.innerHTML =
+        "Searching Wikipedia…";
+
+
+      try {
+
+        /*
+          STEP 1:
+          Search for the city.
+        */
+
+        const results =
+          await searchWikipedia(city);
+
+
+        if (!results.length) {
+
+          throw new Error(
+            `No Wikipedia result found for "${city}".`
+          );
+
+        }
+
+
+        /*
+          STEP 2:
+          Find exact result if possible.
+        */
+
+        const exact =
+          results.find(item =>
+            item.title?.toLowerCase() ===
+            city.toLowerCase()
+          );
+
+
+        const selected =
+          exact || results[0];
+
+
+        const selectedTitle =
+          selected.title;
+
+
+        /*
+          STEP 3:
+          Fetch full summary.
+        */
+
+        const summary =
+          await getWikipediaSummary(
+            selectedTitle
+          );
+
+
+        /*
+          STEP 4:
+          Update dashboard.
+        */
+
+        renderOverview(summary);
+
+
+        renderSights(
+          results,
+          summary.title || selectedTitle
+        );
+
+
+        searchStatus.innerHTML = `
+
+          <span class="inline-flex items-center gap-2 text-green-700 font-semibold">
+
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+
+            Live Wikipedia data loaded
+
+          </span>
+
+        `;
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        cityTitle.textContent =
+          "Destination unavailable";
+
+
+        countryBadge.classList.add("hidden");
+
+
+        overviewContent.innerHTML = `
+
+          <div class="fade">
+
+            <p class="text-lg font-bold text-ink">
+              We couldn't find that destination.
+            </p>
+
+            <p class="mt-2 text-muted">
+              Try a common Wikipedia city name such as
+              Tokyo, Paris, London, Dubai or Cape Town.
+            </p>
+
+          </div>
+
+        `;
+
+
+        coordinates.textContent =
+          "—";
+
+
+        language.textContent =
+          "—";
+
+
+        renderImage(null);
+
+
+        sightsGrid.innerHTML = `
+
+          <div class="sm:col-span-2 lg:col-span-4 bg-paper rounded-2xl p-6 text-muted">
+
+            Search again using another city name.
+
+          </div>
+
+        `;
+
+
+        sightsHint.textContent =
+          "No destination results.";
+
+
+        searchStatus.innerHTML = `
+
+          <span class="text-red-600 font-semibold">
+
+            ${escapeHTML(error.message)}
+
+          </span>
+
+        `;
+
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    }
+
+
+    /*
+      Submit button search.
+    */
+
+    form.addEventListener(
+      "submit",
+      async event => {
+
+        event.preventDefault();
+
+        await loadCity(
+          input.value
+        );
+
+      }
+    );
+
+
+    /*
+      LIVE SEARCH:
+      Automatically searches after
+      the user stops typing for 650ms.
+    */
+
+    input.addEventListener(
+      "input",
+      () => {
+
+        clearTimeout(
+          debounceTimer
+        );
+
+
+        const value =
+          input.value.trim();
+
+
+        if (value.length < 2) {
+
+          searchStatus.textContent =
+            "";
+
+          return;
+
+        }
+
+
+        debounceTimer =
+          setTimeout(
+            () => loadCity(value),
+            650
+          );
+
+      }
+    );
+
+
+    /*
+      Load a default city when
+      the website opens.
+    */
+
+    loadCity("Tokyo");
+
+  </script>
+
+</body>
+</html>

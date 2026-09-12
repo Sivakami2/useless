@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloRoute - Global Trip Blueprint</title>
+    <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
+
+    <!-- Search Section -->
+    <div class="bg-gradient-to-r select-none from-indigo-600 to-blue-600 text-white py-12 px-6 text-center shadow-md">
+        <h1 class="text-3xl font-black mb-2">🎒 SoloRoute</h1>
+        <p class="text-sm opacity-90 mb-6">Your entire solo trip blueprint inside a single, zero-fuss dashboard.</p>
+        <div class="max-w-md mx-auto flex gap-2">
+            <!-- Changed to an open text input box so users can type ANY destination -->
+            <input id="destInput" type="text" placeholder="Type any place (e.g., Munnar, Goa, Paris)..." class="w-full px-4 py-2.5 rounded-lg text-slate-900 focus:outline-none font-medium bg-white">
+            <button onclick="searchDestination()" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-6 py-2.5 rounded-lg transition">Plan</button>
+        </div>
+    </div>
+
+    <!-- Loading Spinner & Status -->
+    <div id="statusMessage" class="hidden text-center font-medium mt-4 text-indigo-600 animate-pulse">Building your blueprint...</div>
+
+    <!-- Dashboard Content Grid -->
+    <div id="dashboard" class="hidden max-w-6xl mx-auto p-6 space-y-6">
+        
+        <!-- Big Overview Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 id="destinationTitle" class="text-2xl font-black text-indigo-700 mb-2 uppercase tracking-tight">Destination</h2>
+            <p id="destinationSummary" class="text-slate-600 text-sm leading-relaxed">Gathering details...</p>
+        </div>
+
+        <!-- Three-Column Info Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Card 1: Transit -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-indigo-600 mb-3">🚇 How to Reach</h3>
+                <p class="text-xs text-slate-400 mb-3">Public routes & options:</p>
+                <ul id="transitList" class="text-sm space-y-2 text-slate-600 list-disc pl-4">
+                    <!-- Dynamically injected -->
+                </ul>
+            </div>
+
+            <!-- Card 2: Top Attractions -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-emerald-600 mb-3">🏛️ Top Sights to Explore</h3>
+                <p class="text-xs text-slate-400 mb-3">Solo-friendly spots:</p>
+                <ul id="sightsList" class="text-sm space-y-2 text-slate-600 list-disc pl-4">
+                    <!-- Dynamically injected -->
+                </ul>
+            </div>
+
+            <!-- Card 3: Solo Survival Guide -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-amber-600 mb-3">🏡 Lodging & Stays</h3>
+                <p class="text-xs text-slate-400 mb-3">Budget recommendations:</p>
+                <ul id="stayList" class="text-sm space-y-2 text-slate-600">
+                    <li><strong>Hostels:</strong> Look for backpacker hostels near the town center for social hubs.</li>
+                    <li><strong>Transport:</strong> Check local auto-rickshaw fare cards or rent a scooter for cheap transit.</li>
+                    <li><strong>Vibe:</strong> Keep your digital maps downloaded offline before venturing out.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Full Width Card: Safety Matrix -->
+        <div class="bg-slate-900 text-slate-100 p-6 rounded-xl shadow-md">
+            <h3 class="text-lg font-bold text-rose-400 mb-3">🚨 Solo Safety Matrix</h3>
+            <ul class="text-sm space-y-2 text-slate-300">
+                <li>📞 <strong>Emergency Help:</strong> Keep local emergency lines active on speed-dial.</li>
+                <li>📍 <strong>Location Sharing:</strong> Always drop a live message marker to friends when moving late at night.</li>
+                <li>🎒 <strong>Backup Pack:</strong> Keep physical cash copies separated from your active wallet.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function searchDestination() {
+            const query = document.getElementById('destInput').value.trim();
+            const dashboard = document.getElementById('dashboard');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (!query) return;
+
+            // Show loading indicator
+            statusMessage.classList.remove('hidden');
+            dashboard.classList.add('hidden');
+
+            try {
+                // Fetch basic text data dynamically using Wikipedia's API
+                const url = `https://wikipedia.org{encodeURIComponent(query)}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error("Location not found");
+                
+                const data = await response.api ? await response.json() : await response.json();
+
+                // Update Overview Content
+                document.getElementById('destinationTitle').textContent = `📍 ${query}`;
+                document.getElementById('destinationSummary').textContent = data.extract || "No dynamic overview available for this specific coordinates.";
+
+                // Generate smart mock-lists matching whatever city they typed in
+                document.getElementById('transitList').innerHTML = `
+                    <li>Check overnight sleeper trains heading toward the nearest major junction to <strong>${query}</strong>.</li>
+                    <li>State-run public highway buses operate heavily into the central terminal daily.</li>
+                    <li>Local taxi operators and shared vehicle networks run close loops from transit gates.</li>
+                `;
+
+                document.getElementById('sightsList').innerHTML = `
+                    <li>Explore the historical landmarks right in the main district core.</li>
+                    <li>Walk the public nature trails or local market streets for authentic regional food.</li>
+                    <li>Visit the prominent viewpoints overlooking the geographic horizon of <strong>${query}</strong>.</li>
+                `;
+
+                // Show Dashboard
+                statusMessage.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+
+            </div> catch (error) {
+                statusMessage.textContent = "❌ Could not find travel data for that city. Try another location!";
+                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+            }
+        }
+    </script>
+</body>
+</html>

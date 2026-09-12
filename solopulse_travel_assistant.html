@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloPulse - AI Solo Travel Assistant</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .animate-pulse-subtle { animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col overflow-hidden">
+
+    <!-- Top Notification Ticker & Emergency Banner -->
+    <div id="emergency-banner" class="hidden bg-rose-600 text-white px-4 py-2 text-xs md:text-sm font-medium flex items-center justify-between shadow-md z-50 transition-all duration-300">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+            <span id="emergency-banner-text">SOS ACTIVE: Connecting with emergency services & sharing live GPS coordinates.</span>
+        </div>
+        <button onclick="closeEmergencyBanner()" class="bg-rose-700 hover:bg-rose-800 px-2 py-1 rounded text-xs">Dismiss</button>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between z-40 transition-all duration-300 absolute md:relative inset-y-0 left-0 -translate-x-full md:translate-x-0 shadow-2xl">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-compass text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-lg tracking-wide">SoloPulse</h1>
+                        <p class="text-xs text-indigo-400 font-medium">AI Solo Travel Companion</p>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20" data-tab="dashboard">
+                    <i class="fa-solid fa-house-chimney w-5"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('ai-companion')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="ai-companion">
+                    <i class="fa-solid fa-robot w-5 text-indigo-400"></i>
+                    <span>AI Assistant</span>
+                    <span class="ml-auto bg-indigo-500/20 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full font-bold">LIVE</span>
+                </button>
+                <button onclick="switchTab('trip-planner')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="trip-planner">
+                    <i class="fa-solid fa-map-location-dot w-5"></i>
+                    <span>Trip Planner</span>
+                </button>
+                <button onclick="switchTab('smart-itinerary')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="smart-itinerary">
+                    <i class="fa-solid fa-calendar-days w-5"></i>
+                    <span>Smart Itinerary</span>
+                </button>
+                <button onclick="switchTab('transport-hub')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="transport-hub">
+                    <i class="fa-solid fa-train-subway w-5"></i>
+                    <span>Transport Hub</span>
+                </button>
+                <button onclick="switchTab('food-stays')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="food-stays">
+                    <i class="fa-solid fa-utensils w-5"></i>
+                    <span>Food & Stays</span>
+                </button>
+                <button onclick="switchTab('budget-tracker')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="budget-tracker">
+                    <i class="fa-solid fa-wallet w-5"></i>
+                    <span>Budget & Expenses</span>
+                </button>
+                <button onclick="switchTab('packing-checklist')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white" data-tab="packing-checklist">
+                    <i class="fa-solid fa-suitcase-rolling w-5"></i>
+                    <span>Packing Checklist</span>
+                </button>
+                <button onclick="switchTab('emergency-sos')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-rose-950/50 hover:text-rose-400 border border-transparent hover:border-rose-900" data-tab="emergency-sos">
+                    <i class="fa-solid fa-shield-halved w-5 text-rose-500"></i>
+                    <span class="text-rose-400 font-semibold">Emergency SOS</span>
+                </button>
+            </nav>
+
+            <!-- User Footer Profile -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/40">
+                <div class="flex items-center space-x-3">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-indigo-500 object-cover">
+                    <div class="flex-1 overflow-hidden">
+                        <h4 class="text-sm font-semibold text-white truncate">Alex Morgan</h4>
+                        <p class="text-xs text-slate-400 truncate">Solo Explorer • Level 4</p>
+                    </div>
+                    <button onclick="triggerResetData()" title="Reset All Data" class="text-slate-500 hover:text-rose-400 p-1">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-hidden">
+            
+            <!-- TOP HEADER BAR -->
+            <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-30 shadow-xs">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <div>
+                        <h2 id="page-title" class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                            <span>Dashboard Overview</span>
+                        </h2>
+                        <p id="page-subtitle" class="text-xs text-slate-500">Welcome back! Your journey is running smoothly.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Live Weather Widget Quick -->
+                    <div class="hidden sm:flex items-center space-x-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700">
+                        <i class="fa-solid fa-cloud-sun text-amber-500"></i>
+                        <span id="top-weather">Kyoto, 22°C • Partly Cloudy</span>
+                    </div>
+
+                    <!-- Quick SOS Button -->
+                    <button onclick="triggerEmergencySOS()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-rose-600/20 transition-transform active:scale-95">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>SOS</span>
+                    </button>
+
+                    <!-- Notifications Bell -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 relative">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full"></span>
+                        </button>
+                        <!-- Dropdown panel -->
+                        <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50">
+                            <div class="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+                                <h4 class="font-bold text-xs uppercase tracking-wider text-slate-500">Travel Alerts & Reminders</h4>
+                                <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">3 New</span>
+                            </div>
+                            <div class="divide-y divide-slate-100 max-h-64 overflow-y-auto text-xs">
+                                <div class="p-3 hover:bg-slate-50 flex space-x-3">
+                                    <i class="fa-solid fa-train text-amber-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-semibold text-slate-800">Train Thunderbird 19 delayed by 15 mins</p>
+                                        <p class="text-slate-500 text-[11px] mt-0.5">Smart Itinerary has auto-adjusted your temple visit.</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 hover:bg-slate-50 flex space-x-3">
+                                    <i class="fa-solid fa-cloud-rain text-blue-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-semibold text-slate-800">Light rain expected at 4:00 PM</p>
+                                        <p class="text-slate-500 text-[11px] mt-0.5">Reminder to carry your waterproof jacket from packing list.</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 hover:bg-slate-50 flex space-x-3">
+                                    <i class="fa-solid fa-wallet text-emerald-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-semibold text-slate-800">Budget on track</p>
+                                        <p class="text-slate-500 text-[11px] mt-0.5">You have saved ₹4,200 compared to average daily spend.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB CONTENT CONTAINER -->
+            <div id="content-area" class="flex-1 overflow-y-auto p-4 md:p-6 relative">
+                <!-- Dynamic tab contents will be injected here via JavaScript -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Reusable Modal Container -->
+    <div id="global-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+            <!-- Modal Body injected dynamically -->
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        // --- APPLICATION STATE & LOCALSTORAGE ---
+        const DEFAULT_STATE = {
+            currentTab: 'dashboard',
+            activeTrip: {
+                destination: 'Kyoto, Japan',
+                startingLocation: 'Tokyo Station',
+                startDate: '2026-06-10',
+                endDate: '2026-06-17',
+                travelers: 1,
+                totalBudget: 45000,
+                spentBudget: 18250,
+                currency: '₹',
+                travelPref: 'Public Transit & Walking',
+                foodPref: 'Local Authentic & Street Food',
+                interests: 'Temples, Photography, Hiking, Matcha Cafes',
+                status: 'Active'
+            },
+            itinerary: [
+                { id: 1, day: 1, time: '09:00 AM', activity: 'Arrive & Check-in at Hotel Gracery Kyoto', location: 'Kyoto Station Area', travelTime: '15 mins taxi', cost: 0, transport: 'Subway', notes: 'Keep passport ready for check-in.' },
+                { id: 2, day: 1, time: '11:30 AM', activity: 'Visit Fushimi Inari Shrine (Thousands of Torii Gates)', location: 'Fushimi Ward', travelTime: '20 mins train', cost: 0, transport: 'JR Nara Line', notes: 'Wear comfortable walking shoes.' },
+                { id: 3, day: 1, time: '02:00 PM', activity: 'Authentic Ramen Lunch at Gion Rokkaku', location: 'Gion District', travelTime: '15 mins bus', cost: 850, transport: 'City Bus #205', notes: 'Try the special tonkotsu broth.' },
+                { id: 4, day: 1, time: '04:30 PM', activity: 'Stroll Historic Gion Geisha District & Hanamikoji Street', location: 'Gion', travelTime: 'Walking (5 mins)', cost: 0, transport: 'Walk', notes: 'Respect local rules regarding photography.' },
+                { id: 5, day: 2, time: '08:30 AM', activity: 'Arashiyama Bamboo Grove & Tenryu-ji Temple', location: 'Arashiyama', travelTime: '30 mins train', cost: 600, transport: 'JR Sagano Line', notes: 'Go early to avoid peak crowds.' },
+                { id: 6, day: 2, time: '01:00 PM', activity: 'Matcha Parfait Tasting at Uji Tea House', location: 'Arashiyama Riverbank', travelTime: 'Walking', cost: 1200, transport: 'Walk', notes: 'Recommended by SoloPulse AI.' }
+            ],
+            expenses: [
+                { id: 1, category: 'Stay', title: 'Hotel Gracery 3 Nights', amount: 12000, date: '2026-06-10' },
+                { id: 2, category: 'Transport', title: 'Shinkansen Bullet Train Ticket', amount: 4200, date: '2026-06-10' },
+                { id: 3, category: 'Food', title: 'Gion Ramen Lunch', amount: 850, date: '2026-06-10' },
+                { id: 4, category: 'Activities', title: 'Tenryu-ji Temple Entry', amount: 600, date: '2026-06-11' },
+                { id: 5, category: 'Food', title: 'Matcha Tasting', amount: 1200, date: '2026-06-11' }
+            ],
+            packingList: [
+                { id: 1, category: 'Essentials', item: 'Passport & Visa Copies', packed: true },
+                { id: 2, category: 'Essentials', item: 'Universal Travel Adapter', packed: true },
+                { id: 3, category: 'Clothing', item: 'Lightweight Rain Jacket', packed: false },
+                { id: 4, category: 'Clothing', item: 'Comfortable Walking Sneakers', packed: true },
+                { id: 5, category: 'Electronics', item: 'Power Bank (20000mAh)', packed: true },
+                { id: 6, category: 'Health', item: 'Personal Meds & First Aid', packed: false }
+            ],
+            chatMessages: [
+                { sender: 'ai', text: 'Hello Alex! I am your SoloPulse AI Assistant. Your trip to Kyoto is active today. How can I help you navigate or adjust your plans right now?' }
+            ],
+            trains: [
+                { number: 'Thunderbird 19', route: 'Tokyo → Kyoto', departure: '08:10 AM', platform: 'Platform 4', status: 'Delayed (+15m)', type: 'Express' },
+                { number: 'Hikari 505', route: 'Kyoto → Osaka', departure: '10:30 AM', platform: 'Platform 2', status: 'On Time', type: 'Bullet Shinkansen' },
+                { number: 'JR Nara Local', route: 'Kyoto → Fushimi', departure: 'Every 10 mins', platform: 'Platform 8', status: 'On Time', type: 'Local' }
+            ]
+        };
+
+        let state = JSON.parse(localStorage.getItem('solopulse_state')) || DEFAULT_STATE;
+
+        function saveState() {
+            localStorage.setItem('solopulse_state', JSON.stringify(state));
+        }
+
+        function triggerResetData() {
+            if(confirm('Reset all trip and app data back to default demo?')) {
+                state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+                saveState();
+                switchTab('dashboard');
+                showToast('Application data reset successfully!', 'success');
+            }
+        }
+
+        // --- NAVIGATION & UI ROUTING ---
+        function switchTab(tabId) {
+            state.currentTab = tabId;
+            saveState();
+
+            // Update sidebar buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20";
+                } else {
+                    btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white";
+                }
+            });
+
+            // Update header title
+            const titles = {
+                'dashboard': ['Dashboard Overview', 'Welcome back! Your journey is running smoothly.'],
+                'ai-companion': ['AI Travel Assistant', 'Ask anything or let AI proactively manage your trip.'],
+                'trip-planner': ['Trip Planner', 'Create or customize your custom dream itinerary.'],
+                'smart-itinerary': ['Smart Itinerary', 'Day-by-day schedule with auto-adaptation & delay simulation.'],
+                'transport-hub': ['Transport Hub', 'Live train & bus schedules, platform tracking & tickets.'],
+                'food-stays': ['Food & Stays Explorer', 'Curated local eateries, ramen bars & cozy hotels.'],
+                'budget-tracker': ['Budget & Expense Manager', 'Real-time financial tracking and category breakdown.'],
+                'packing-checklist': ['Packing Checklist', 'Never leave behind essential gear again.'],
+                'emergency-sos': ['Emergency SOS Hub', 'Instant emergency help, embassy contacts & safety guides.']
+            };
+
+            if(titles[tabId]) {
+                document.getElementById('page-title').innerHTML = `<span>${titles[tabId][0]}</span>`;
+                document.getElementById('page-subtitle').innerText = titles[tabId][1];
+            }
+
+            // Close sidebar on mobile
+            if(window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+
+            renderContent();
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+        }
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notification-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColors = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white';
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+            
+            toast.className = `${bgColors} px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- RENDER DISPATCHER ---
+        function renderContent() {
+            const container = document.getElementById('content-area');
+            switch(state.currentTab) {
+                case 'dashboard': container.innerHTML = renderDashboard(); break;
+                case 'ai-companion': container.innerHTML = renderAICompanion(); initChatListeners(); break;
+                case 'trip-planner': container.innerHTML = renderTripPlanner(); break;
+                case 'smart-itinerary': container.innerHTML = renderSmartItinerary(); break;
+                case 'transport-hub': container.innerHTML = renderTransportHub(); break;
+                case 'food-stays': container.innerHTML = renderFoodStays(); break;
+                case 'budget-tracker': container.innerHTML = renderBudgetTracker(); break;
+                case 'packing-checklist': container.innerHTML = renderPackingChecklist(); break;
+                case 'emergency-sos': container.innerHTML = renderEmergencySOS(); break;
+                default: container.innerHTML = renderDashboard();
+            }
+        }
+
+        // --- 1. DASHBOARD VIEW ---
+        function renderDashboard() {
+            const trip = state.activeTrip;
+            const remainingBudget = trip.totalBudget - trip.spentBudget;
+            const budgetPercent = Math.round((trip.spentBudget / trip.totalBudget) * 100);
+
+            return `
+                <div class="space-y-6 max-w-7xl mx-auto pb-12">
+                    <!-- Welcome Banner Card -->
+                    <div class="relative bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 rounded-3xl p-6 md:p-8 text-white shadow-xl overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="relative z-10 space-y-2">
+                            <span class="bg-indigo-500/30 text-indigo-200 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-400/30">Active Journey</span>
+                            <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Exploring ${trip.destination} 🌸</h2>
+                            <p class="text-indigo-200 text-sm max-w-xl">You are currently on Day 2 of your 7-day solo adventure. Next activity starts in 45 minutes.</p>
+                        </div>
+                        <div class="mt-6 md:mt-0 relative z-10 flex flex-wrap gap-3">
+                            <button onclick="switchTab('smart-itinerary')" class="bg-white text-indigo-900 hover:bg-indigo-50 px-5 py-2.5 rounded-2xl font-semibold text-sm shadow-lg transition-transform active:scale-95">
+                                <i class="fa-solid fa-calendar-days mr-2"></i> View Itinerary
+                            </button>
+                            <button onclick="switchTab('ai-companion')" class="bg-indigo-600/80 hover:bg-indigo-600 text-white border border-indigo-400/30 px-5 py-2.5 rounded-2xl font-semibold text-sm backdrop-blur-md transition-transform active:scale-95">
+                                <i class="fa-solid fa-robot mr-2"></i> Ask AI Assistant
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Widgets Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Location & Weather Widget -->
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-400">
+                                <span class="text-xs font-bold uppercase tracking-wider">Current Location</span>
+                                <i class="fa-solid fa-location-dot text-indigo-600"></i>
+                            </div>
+                            <div class="my-3">
+                                <h3 class="text-lg font-bold text-slate-800">Kyoto, Arashiyama</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">GPS Accuracy: High (±3m)</p>
+                            </div>
+                            <div class="bg-slate-50 p-2.5 rounded-2xl flex items-center justify-between text-xs font-medium text-slate-700">
+                                <span class="flex items-center"><i class="fa-solid fa-temperature-half text-amber-500 mr-1.5"></i> 22°C Partly Cloudy</span>
+                                <span class="text-indigo-600">Rain in 3h</span>
+                            </div>
+                        </div>
+
+                        <!-- Next Activity Countdown -->
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-400">
+                                <span class="text-xs font-bold uppercase tracking-wider">Next Activity</span>
+                                <i class="fa-solid fa-clock text-indigo-600"></i>
+                            </div>
+                            <div class="my-3">
+                                <h3 class="text-base font-bold text-slate-800 line-clamp-1">Arashiyama Bamboo Grove</h3>
+                                <p class="text-xs text-indigo-600 font-semibold mt-0.5">Starts in 45 mins (08:30 AM)</p>
+                            </div>
+                            <div class="bg-indigo-50 p-2.5 rounded-2xl flex items-center justify-between text-xs font-medium text-indigo-700">
+                                <span>Transport: JR Train</span>
+                                <span class="font-bold">30 mins</span>
+                            </div>
+                        </div>
+
+                        <!-- Remaining Budget Widget -->
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-400">
+                                <span class="text-xs font-bold uppercase tracking-wider">Remaining Budget</span>
+                                <i class="fa-solid fa-wallet text-emerald-600"></i>
+                            </div>
+                            <div class="my-3">
+                                <h3 class="text-xl font-extrabold text-slate-800">${trip.currency}${remainingBudget.toLocaleString()}</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Spent ${trip.currency}${trip.spentBudget.toLocaleString()} of ${trip.currency}${trip.totalBudget.toLocaleString()}</p>
+                            </div>
+                            <!-- Progress bar -->
+                            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: ${budgetPercent}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Next Transport Widget -->
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-400">
+                                <span class="text-xs font-bold uppercase tracking-wider">Next Transport</span>
+                                <i class="fa-solid fa-train text-amber-500"></i>
+                            </div>
+                            <div class="my-3">
+                                <h3 class="text-base font-bold text-slate-800">Thunderbird 19</h3>
+                                <p class="text-xs text-amber-600 font-semibold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Delayed by 15 mins</p>
+                            </div>
+                            <button onclick="switchTab('transport-hub')" class="w-full bg-slate-50 hover:bg-slate-100 py-2 rounded-xl text-xs font-semibold text-slate-700 transition-colors">
+                                View Platform & QR
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Buttons Grid -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Quick Actions & Tools</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                            <button onclick="switchTab('trip-planner')" class="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-compass-drafting"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600">Plan a Trip</span>
+                            </button>
+                            <button onclick="switchTab('smart-itinerary')" class="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600">View Itinerary</span>
+                            </button>
+                            <button onclick="switchTab('transport-hub')" class="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-train"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600">Find Transport</span>
+                            </button>
+                            <button onclick="switchTab('food-stays')" class="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-bowl-food"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600">Find Food & Stay</span>
+                            </button>
+                            <button onclick="switchTab('budget-tracker')" class="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-coins"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600">Manage Budget</span>
+                            </button>
+                            <button onclick="switchTab('packing-checklist')" class="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-suitcase"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600">Packing List</span>
+                            </button>
+                            <button onclick="switchTab('emergency-sos')" class="p-4 rounded-2xl bg-rose-50 hover:bg-rose-100 hover:text-rose-700 border border-rose-100 flex flex-col items-center text-center transition-all group">
+                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-rose-600 mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <span class="text-xs font-bold text-rose-600 group-hover:text-rose-700">Emergency SOS</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 2. AI TRAVEL ASSISTANT VIEW ---
+        function renderAICompanion() {
+            return `
+                <div class="max-w-4xl mx-auto h-[calc(100vh-8rem)] flex flex-col bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+                    <!-- Chat Header -->
+                    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800">SoloPulse AI Companion</h3>
+                                <p class="text-xs text-emerald-600 font-medium flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5 animate-pulse"></span> Context Synced with Kyoto Trip</p>
+                            </div>
+                        </div>
+                        <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-600 px-3 py-1.5 rounded-xl bg-slate-100">Clear Chat</button>
+                    </div>
+
+                    <!-- Chat Message History -->
+                    <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/30">
+                        ${state.chatMessages.map(msg => msg.sender === 'user' ? `
+                            <div class="flex items-start justify-end space-x-3">
+                                <div class="bg-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-xs max-w-md text-sm shadow-md shadow-indigo-600/10">
+                                    ${escapeHTML(msg.text)}
+                                </div>
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" class="w-8 h-8 rounded-full object-cover">
+                            </div>
+                        ` : `
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold shrink-0">
+                                    <i class="fa-solid fa-robot text-xs"></i>
+                                </div>
+                                <div class="bg-white border border-slate-200 text-slate-800 px-5 py-3 rounded-2xl rounded-tl-xs max-w-lg text-sm shadow-sm">
+                                    ${formatAIMessage(msg.text)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Preset Query Chips -->
+                    <div class="px-6 py-2 bg-white border-t border-slate-100 flex items-center space-x-2 overflow-x-auto text-xs">
+                        <span class="text-slate-400 shrink-0 font-medium">Quick ask:</span>
+                        <button onclick="sendPresetQuery('Where should I go now?')" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 px-3 py-1.5 rounded-full shrink-0 transition-colors">Where should I go now?</button>
+                        <button onclick="sendPresetQuery('Find food near me')" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 px-3 py-1.5 rounded-full shrink-0 transition-colors">Find food near me</button>
+                        <button onclick="sendPresetQuery('What is my next activity?')" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 px-3 py-1.5 rounded-full shrink-0 transition-colors">What is my next activity?</button>
+                        <button onclick="sendPresetQuery('How much money do I have left?')" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 px-3 py-1.5 rounded-full shrink-0 transition-colors">How much money do I have left?</button>
+                        <button onclick="sendPresetQuery('My train is delayed. What should I do?')" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 px-3 py-1.5 rounded-full shrink-0 transition-colors">Train delay help</button>
+                    </div>
+
+                    <!-- Input Bar -->
+                    <div class="p-4 bg-white border-t border-slate-200 flex items-center space-x-3">
+                        <input type="text" id="chat-input" onkeydown="if(event.key==='Enter') sendChatMessage()" placeholder="Ask AI assistant about transport, food, budget or itinerary..." class="flex-1 bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+                        <button onclick="sendChatMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md shadow-indigo-600/30 transition-transform active:scale-95 shrink-0">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function initChatListeners() {
+            const container = document.getElementById('chat-messages');
+            if(container) container.scrollTop = container.scrollHeight;
+        }
+
+        function sendPresetQuery(text) {
+            document.getElementById('chat-input').value = text;
+            sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            state.chatMessages.push({ sender: 'user', text });
+            input.value = '';
+            renderContent();
+
+            // Simulate AI thinking and response
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(text);
+                state.chatMessages.push({ sender: 'ai', text: aiResponse });
+                saveState();
+                renderContent();
+            }, 600);
+        }
+
+        function clearChat() {
+            state.chatMessages = [{ sender: 'ai', text: 'Chat cleared. How else can I assist your solo journey?' }];
+            saveState();
+            renderContent();
+        }
+
+        function generateAIResponse(query) {
+            const q = query.toLowerCase();
+            const trip = state.activeTrip;
+            const remaining = trip.totalBudget - trip.spentBudget;
+
+            if (q.includes('where should i go') || q.includes('next activity')) {
+                return `Based on your current itinerary in **${trip.destination}**, your next scheduled activity is **Arashiyama Bamboo Grove** at 08:30 AM. It's only 30 minutes away via the JR Sagano Line.`;
+            }
+            if (q.includes('food') || q.includes('restaurant') || q.includes('eat')) {
+                return `For authentic food near your current location in Kyoto, I recommend **Gion Rokkaku** for rich tonkotsu ramen (~₹850) or the local Matcha Tea House in Arashiyama. Would you like me to add either to your itinerary?`;
+            }
+            if (q.includes('money') || q.includes('budget') || q.includes('left')) {
+                return `You have **${trip.currency}${remaining.toLocaleString()}** remaining out of your total budget of ${trip.currency}${trip.totalBudget.toLocaleString()}. You are tracking 12% under average daily spend!`;
+            }
+            if (q.includes('rain') || q.includes('weather')) {
+                return `The weather in Kyoto is currently 22°C with partly cloudy skies. Light rain is forecasted around 4:00 PM today. Don't forget your lightweight rain jacket!`;
+            }
+            if (q.includes('train') || q.includes('delay') || q.includes('station')) {
+                return `Your train **Thunderbird 19** is currently delayed by 15 minutes on Platform 4. Smart Itinerary has automatically adjusted your morning schedule buffer so you won't miss anything.`;
+            }
+            if (q.includes('₹500') || q.includes('cheap')) {
+                return `With ₹500 left, you can enjoy a delicious bowl of udon noodles at Kyoto Station underground market (~₹450) or grab a freshly baked melon pan from the local bakery (~₹300).`;
+            }
+            if (q.includes('plan tomorrow') || q.includes('tomorrow')) {
+                return `Tomorrow in Kyoto, your plan includes exploring the historic Kiyomizu-dera Temple in the morning, followed by traditional tea ceremony in Ninenzaka slope. Shall I confirm this?`;
+            }
+            return `I've analyzed your request regarding "${query}". Everything is in order for your trip to ${trip.destination}. Let me know if you need to adjust transport, find stays, or check expenses!`;
+        }
+
+        function formatAIMessage(text) {
+            // Simple markdown bold formatting
+            return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // --- 3. TRIP PLANNER VIEW ---
+        function renderTripPlanner() {
+            const trip = state.activeTrip;
+            return `
+                <div class="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-xl p-6 md:p-8 space-y-6">
+                    <div class="border-b border-slate-100 pb-4">
+                        <h3 class="text-xl font-bold text-slate-800">Trip Planner & AI Generator</h3>
+                        <p class="text-xs text-slate-500 mt-1">Configure your dream solo trip parameters to generate an intelligent day-by-day itinerary.</p>
+                    </div>
+
+                    <form onsubmit="handleTripPlannerSubmit(event)" class="space-y-4 text-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Destination</label>
+                                <input type="text" id="plan-destination" value="${trip.destination}" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Starting Location</label>
+                                <input type="text" id="plan-starting" value="${trip.startingLocation}" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Start Date</label>
+                                <input type="date" id="plan-start-date" value="${trip.startDate}" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">End Date</label>
+                                <input type="date" id="plan-end-date" value="${trip.endDate}" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Total Budget (₹)</label>
+                                <input type="number" id="plan-budget" value="${trip.totalBudget}" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Travel Preferences</label>
+                                <input type="text" id="plan-travel-pref" value="${trip.travelPref}" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Food Preferences</label>
+                                <input type="text" id="plan-food-pref" value="${trip.foodPref}" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Interests & Activities</label>
+                            <input type="text" id="plan-interests" value="${trip.interests}" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="Temples, Photography, Hiking...">
+                        </div>
+
+                        <div class="pt-4 flex justify-end space-x-3">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-2xl shadow-lg shadow-indigo-600/30 transition-transform active:scale-95">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generate Smart Itinerary
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        function handleTripPlannerSubmit(event) {
+            event.preventDefault();
+            state.activeTrip.destination = document.getElementById('plan-destination').value;
+            state.activeTrip.startingLocation = document.getElementById('plan-starting').value;
+            state.activeTrip.startDate = document.getElementById('plan-start-date').value;
+            state.activeTrip.endDate = document.getElementById('plan-end-date').value;
+            state.activeTrip.totalBudget = Number(document.getElementById('plan-budget').value);
+            state.activeTrip.travelPref = document.getElementById('plan-travel-pref').value;
+            state.activeTrip.foodPref = document.getElementById('plan-food-pref').value;
+            state.activeTrip.interests = document.getElementById('plan-interests').value;
+
+            saveState();
+            showToast('Trip parameters updated & AI Itinerary generated!', 'success');
+            switchTab('smart-itinerary');
+        }
+
+        // --- 4. SMART ITINERARY VIEW ---
+        function renderSmartItinerary() {
+            const days = [...new Set(state.itinerary.map(i => i.day))];
+
+            return `
+                <div class="max-w-5xl mx-auto space-y-6 pb-12">
+                    <!-- Action Toolbar -->
+                    <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Smart Itinerary & Auto-Adaptation</h3>
+                            <p class="text-xs text-slate-500">AI monitors train delays and automatically adjusts schedule buffers.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="simulateTrainDelay()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-amber-500/20 transition-transform active:scale-95">
+                                <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Simulate Train Delay
+                            </button>
+                            <button onclick="openAddActivityModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/20 transition-transform active:scale-95">
+                                <i class="fa-solid fa-plus mr-1.5"></i> Add Activity
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Day Tabs / Sections -->
+                    ${days.map(day => `
+                        <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                                <h4 class="font-bold text-slate-800 text-base flex items-center">
+                                    <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xs mr-3 shadow-sm">Day ${day}</span>
+                                    Schedule & Activities
+                                </h4>
+                                <span class="text-xs text-slate-500">Date: June ${9 + day}, 2026</span>
+                            </div>
+                            <div class="divide-y divide-slate-100">
+                                ${state.itinerary.filter(i => i.day === day).map(item => `
+                                    <div class="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-slate-50/50 transition-colors gap-4">
+                                        <div class="flex items-start space-x-4">
+                                            <div class="text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1.5 rounded-xl shrink-0">
+                                                ${item.time}
+                                            </div>
+                                            <div>
+                                                <h5 class="font-bold text-slate-800 text-sm">${escapeHTML(item.activity)}</h5>
+                                                <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> ${escapeHTML(item.location)} • <i class="fa-solid fa-route text-indigo-500 ml-2 mr-1"></i> ${escapeHTML(item.travelTime)} (${escapeHTML(item.transport)})</p>
+                                                ${item.notes ? `<p class="text-xs text-indigo-600 font-medium mt-1 bg-indigo-50/60 px-2.5 py-1 rounded-lg inline-block">Note: ${escapeHTML(item.notes)}</p>` : ''}
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-3 self-end sm:self-center">
+                                            <span class="text-xs font-bold text-slate-700">${item.cost > 0 ? '₹' + item.cost.toLocaleString() : 'Free'}</span>
+                                            <button onclick="editActivity(${item.id})" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 flex items-center justify-center text-slate-500 transition-colors" title="Edit">
+                                                <i class="fa-solid fa-pen text-xs"></i>
+                                            </button>
+                                            <button onclick="deleteActivity(${item.id})" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center text-slate-500 transition-colors" title="Delete">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function simulateTrainDelay() {
+            showToast('⚠️ Train delay detected (+15m). Smart Itinerary auto-adjusted schedule & notified you.', 'error');
+            state.chatMessages.push({ sender: 'ai', text: 'Alert: Thunderbird 19 train delay detected. I have automatically shifted your morning buffer by 15 minutes so your temple visit remains on schedule without rushing!' });
+            saveState();
+            renderContent();
+        }
+
+        function openAddActivityModal() {
+            const modal = document.getElementById('global-modal');
+            const content = document.getElementById('modal-content');
+            
+            content.innerHTML = `
+                <h3 class="font-bold text-slate-800 text-lg mb-4">Add New Activity</h3>
+                <form onsubmit="handleAddActivitySubmit(event)" class="space-y-3 text-sm">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Day Number</label>
+                        <input type="number" id="new-day" value="1" min="1" max="10" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Time</label>
+                        <input type="text" id="new-time" placeholder="03:00 PM" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Activity Name</label>
+                        <input type="text" id="new-activity" placeholder="Visit Museum..." required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Location</label>
+                        <input type="text" id="new-location" placeholder="Downtown..." required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Cost (₹)</label>
+                            <input type="number" id="new-cost" value="0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Transport</label>
+                            <input type="text" id="new-transport" value="Subway" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold">Cancel</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-semibold">Add Activity</button>
+                    </div>
+                </form>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function handleAddActivitySubmit(event) {
+            event.preventDefault();
+            const newAct = {
+                id: Date.now(),
+                day: Number(document.getElementById('new-day').value),
+                time: document.getElementById('new-time').value,
+                activity: document.getElementById('new-activity').value,
+                location: document.getElementById('new-location').value,
+                travelTime: '15 mins',
+                cost: Number(document.getElementById('new-cost').value),
+                transport: document.getElementById('new-transport').value,
+                notes: 'Added by user.'
+            };
+
+            state.itinerary.push(newAct);
+            if(newAct.cost > 0) {
+                state.expenses.push({ id: Date.now(), category: 'Activities', title: newAct.activity, amount: newAct.cost, date: '2026-06-10' });
+                state.activeTrip.spentBudget += newAct.cost;
+            }
+
+            saveState();
+            closeModal();
+            showToast('Activity added successfully!', 'success');
+            renderContent();
+        }
+
+        function deleteActivity(id) {
+            if(confirm('Delete this activity?')) {
+                state.itinerary = state.itinerary.filter(i => i.id !== id);
+                saveState();
+                showToast('Activity removed.', 'info');
+                renderContent();
+            }
+        }
+
+        function editActivity(id) {
+            const item = state.itinerary.find(i => i.id === id);
+            if(!item) return;
+
+            const modal = document.getElementById('global-modal');
+            const content = document.getElementById('modal-content');
+            
+            content.innerHTML = `
+                <h3 class="font-bold text-slate-800 text-lg mb-4">Edit Activity</h3>
+                <form onsubmit="handleEditActivitySubmit(event, ${id})" class="space-y-3 text-sm">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Time</label>
+                        <input type="text" id="edit-time" value="${item.time}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Activity Name</label>
+                        <input type="text" id="edit-activity" value="${item.activity}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Location</label>
+                        <input type="text" id="edit-location" value="${item.location}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold">Cancel</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-semibold">Save Changes</button>
+                    </div>
+                </form>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function handleEditActivitySubmit(event, id) {
+            event.preventDefault();
+            const item = state.itinerary.find(i => i.id === id);
+            if(item) {
+                item.time = document.getElementById('edit-time').value;
+                item.activity = document.getElementById('edit-activity').value;
+                item.location = document.getElementById('edit-location').value;
+                saveState();
+                closeModal();
+                showToast('Activity updated!', 'success');
+                renderContent();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('global-modal').classList.add('hidden');
+        }
+
+        // --- 5. TRANSPORT HUB VIEW ---
+        function renderTransportHub() {
+            return `
+                <div class="max-w-5xl mx-auto space-y-6 pb-12">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Transport Hub & Live Status</h3>
+                            <p class="text-xs text-slate-500">Track trains, buses, platform numbers, and access ticket QR codes instantly.</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="showTicketQR()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/20">
+                                <i class="fa-solid fa-qrcode mr-1.5"></i> My Ticket QR
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Train & Bus List -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${state.trains.map(t => `
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="bg-indigo-50 text-indigo-700 font-bold text-xs px-3 py-1 rounded-full">${t.type}</span>
+                                    <span class="text-xs font-semibold ${t.status.includes('Delayed') ? 'text-amber-600' : 'text-emerald-600'}">${t.status}</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-bold text-slate-800">${t.number}</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-route text-indigo-500 mr-1"></i> ${t.route}</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-2xl flex items-center justify-between text-xs">
+                                    <div>
+                                        <p class="text-slate-400 font-semibold">Departure</p>
+                                        <p class="font-bold text-slate-800 mt-0.5">${t.departure}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-slate-400 font-semibold">Platform</p>
+                                        <p class="font-bold text-indigo-600 mt-0.5">${t.platform}</p>
+                                    </div>
+                                </div>
+                                <button onclick="showTicketQR()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-xl text-xs font-semibold transition-colors">
+                                    View Boarding Pass
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showTicketQR() {
+            const modal = document.getElementById('global-modal');
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <div class="text-center space-y-4">
+                    <h3 class="font-bold text-slate-800 text-lg">JR Shinkansen Boarding Pass</h3>
+                    <p class="text-xs text-slate-500">Scan at automated ticket gates</p>
+                    <div class="bg-slate-100 p-6 rounded-3xl inline-block border border-slate-200">
+                        <i class="fa-solid fa-qrcode text-8xl text-slate-900"></i>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl text-xs text-slate-700 font-medium text-left">
+                        <p><strong>Passenger:</strong> Alex Morgan</p>
+                        <p><strong>Train:</strong> Thunderbird 19 (Car 4, Seat 12A)</p>
+                        <p><strong>Route:</strong> Tokyo → Kyoto</p>
+                    </div>
+                    <button onclick="closeModal()" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-xl text-xs">Close Pass</button>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        // --- 6. FOOD & STAYS EXPLORER ---
+        function renderFoodStays() {
+            return `
+                <div class="max-w-5xl mx-auto space-y-6 pb-12">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
+                        <h3 class="font-bold text-slate-800 text-lg">Curated Food & Stays Explorer</h3>
+                        <p class="text-xs text-slate-500 mt-1">Hand-picked authentic local eateries, ramen bars, and cozy solo-friendly accommodations.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Food Card -->
+                        <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col justify-between">
+                            <img src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&h=300&fit=crop" class="w-full h-48 object-cover" alt="Ramen">
+                            <div class="p-6 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">Top Rated • Ramen</span>
+                                    <span class="text-xs font-bold text-emerald-600">₹850 avg</span>
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-lg">Gion Rokkaku Tonkotsu</h4>
+                                <p class="text-xs text-slate-500">Famous rich broth ramen spot in Gion district. Solo traveller friendly counter seating.</p>
+                                <button onclick="showToast('Added Gion Rokkaku to Saved Places!', 'success')" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2.5 rounded-xl text-xs font-semibold transition-colors">
+                                    Save to Favorites
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stay Card -->
+                        <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col justify-between">
+                            <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&h=300&fit=crop" class="w-full h-48 object-cover" alt="Hotel">
+                            <div class="p-6 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">Solo Pod • Hotel</span>
+                                    <span class="text-xs font-bold text-emerald-600">₹4,000 / night</span>
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-lg">Hotel Gracery Kyoto Station</h4>
+                                <p class="text-xs text-slate-500">Modern clean rooms right next to Kyoto station with secure access and exceptional rating.</p>
+                                <button onclick="showToast('Booking details saved!', 'success')" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2.5 rounded-xl text-xs font-semibold transition-colors">
+                                    View Stay Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 7. BUDGET & EXPENSES VIEW ---
+        function renderBudgetTracker() {
+            const trip = state.activeTrip;
+            const remaining = trip.totalBudget - trip.spentBudget;
+
+            return `
+                <div class="max-w-4xl mx-auto space-y-6 pb-12">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Budget & Expense Manager</h3>
+                            <p class="text-xs text-slate-500">Track all your spending across food, stay, transport, and activities.</p>
+                        </div>
+                        <button onclick="openAddExpenseModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/20">
+                            <i class="fa-solid fa-plus mr-1.5"></i> Add Expense
+                        </button>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+                            <p class="text-xs font-bold text-slate-400 uppercase">Total Budget</p>
+                            <h3 class="text-xl font-extrabold text-slate-800 mt-1">${trip.currency}${trip.totalBudget.toLocaleString()}</h3>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+                            <p class="text-xs font-bold text-slate-400 uppercase">Total Spent</p>
+                            <h3 class="text-xl font-extrabold text-rose-600 mt-1">${trip.currency}${trip.spentBudget.toLocaleString()}</h3>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+                            <p class="text-xs font-bold text-slate-400 uppercase">Remaining</p>
+                            <h3 class="text-xl font-extrabold text-emerald-600 mt-1">${trip.currency}${remaining.toLocaleString()}</h3>
+                        </div>
+                    </div>
+
+                    <!-- Expense History Table -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 font-bold text-xs uppercase tracking-wider text-slate-500">
+                            Expense Transactions
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            ${state.expenses.map(e => `
+                                <div class="p-4 px-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                            <i class="fa-solid fa-coins"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-slate-800 text-sm">${escapeHTML(e.title)}</h4>
+                                            <p class="text-xs text-slate-400">${e.category} • ${e.date}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-bold text-slate-800 text-sm">- ${trip.currency}${e.amount.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openAddExpenseModal() {
+            const modal = document.getElementById('global-modal');
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <h3 class="font-bold text-slate-800 text-lg mb-4">Add New Expense</h3>
+                <form onsubmit="handleAddExpenseSubmit(event)" class="space-y-3 text-sm">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Title</label>
+                        <input type="text" id="exp-title" placeholder="Taxi fare, Dinner..." required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Category</label>
+                        <select id="exp-category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Stay">Stay</option>
+                            <option value="Activities">Activities</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Amount (₹)</label>
+                        <input type="number" id="exp-amount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold">Cancel</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-semibold">Add Expense</button>
+                    </div>
+                </form>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function handleAddExpenseSubmit(event) {
+            event.preventDefault();
+            const title = document.getElementById('exp-title').value;
+            const category = document.getElementById('exp-category').value;
+            const amount = Number(document.getElementById('exp-amount').value);
+
+            state.expenses.push({ id: Date.now(), category, title, amount, date: '2026-06-11' });
+            state.activeTrip.spentBudget += amount;
+            saveState();
+            closeModal();
+            showToast('Expense recorded successfully!', 'success');
+            renderContent();
+        }
+
+        // --- 8. PACKING CHECKLIST VIEW ---
+        function renderPackingChecklist() {
+            const packedCount = state.packingList.filter(i => i.packed).length;
+            const totalCount = state.packingList.length;
+            const percent = Math.round((packedCount / totalCount) * 100);
+
+            return `
+                <div class="max-w-4xl mx-auto space-y-6 pb-12">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Smart Packing Checklist</h3>
+                            <p class="text-xs text-slate-500">Ensure you have all essential gear for your solo adventure.</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-bold text-indigo-600">${packedCount} / ${totalCount} Packed</span>
+                            <div class="w-32 bg-slate-100 rounded-full h-2 mt-1 overflow-hidden">
+                                <div class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                        <div class="divide-y divide-slate-100">
+                            ${state.packingList.map(item => `
+                                <div class="p-4 px-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                                    <label class="flex items-center space-x-3 cursor-pointer select-none">
+                                        <input type="checkbox" ${item.item ? '' : ''} ${item.packed ? 'checked' : ''} onchange="togglePackingItem(${item.id})" class="w-5 h-5 rounded-lg text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                                        <span class="text-sm font-semibold ${item.packed ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHTML(item.item)}</span>
+                                    </label>
+                                    <span class="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">${item.category}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePackingItem(id) {
+            const item = state.packingList.find(i => i.id === id);
+            if(item) {
+                item.packed = !item.packed;
+                saveState();
+                renderContent();
+            }
+        }
+
+        // --- 9. EMERGENCY SOS VIEW ---
+        function renderEmergencySOS() {
+            return `
+                <div class="max-w-4xl mx-auto space-y-6 pb-12">
+                    <div class="bg-rose-950 text-white rounded-3xl p-6 md:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                        <div class="space-y-2">
+                            <span class="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full">Safety & Security Hub</span>
+                            <h3 class="text-2xl font-bold">Emergency SOS & Live GPS Share</h3>
+                            <p class="text-rose-200 text-sm max-w-lg">In case of emergency, instantly broadcast your live GPS coordinates to local emergency services and emergency contacts.</p>
+                        </div>
+                        <button onclick="triggerEmergencySOS()" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-6 py-4 rounded-2xl shadow-lg shadow-rose-600/40 text-base flex items-center space-x-2 transition-transform active:scale-95">
+                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                            <span>ACTIVATE SOS PANIC</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Emergency Numbers -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs text-center space-y-2">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto text-lg font-bold">
+                                <i class="fa-solid fa-police-box"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Police (Japan)</h4>
+                            <p class="text-xl font-extrabold text-rose-600">110</p>
+                            <button onclick="showToast('Calling Police (110)...', 'error')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-2 rounded-xl text-xs font-semibold">Call Now</button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs text-center space-y-2">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto text-lg font-bold">
+                                <i class="fa-solid fa-truck-medical"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Ambulance / Fire</h4>
+                            <p class="text-xl font-extrabold text-rose-600">119</p>
+                            <button onclick="showToast('Calling Ambulance (119)...', 'error')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-2 rounded-xl text-xs font-semibold">Call Now</button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs text-center space-y-2">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto text-lg font-bold">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Embassy Helpline</h4>
+                            <p class="text-sm font-extrabold text-indigo-600 mt-2">+81-3-3263-5911</p>
+                            <button onclick="showToast('Connecting to Embassy...', 'info')" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 rounded-xl text-xs font-semibold">Call Embassy</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function triggerEmergencySOS() {
+            const banner = document.getElementById('emergency-banner');
+            banner.classList.remove('hidden');
+            showToast('🚨 SOS Activated! GPS coordinates broadcasted to emergency contacts.', 'error');
+        }
+
+        function closeEmergencyBanner() {
+            document.getElementById('emergency-banner').classList.add('hidden');
+        }
+
+        // Initialize App on Load
+        window.onload = function() {
+            switchTab(state.currentTab);
+        };
+    </script>
+</body>
+</html>
